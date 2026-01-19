@@ -12,24 +12,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// MongoDB Connection - Optimizado para Railway
+// MongoDB Connection - Optimizado para Vercel
 let cachedClient = null;
 let cachedDb = null;
 
-async function connectDB() {
-    if (cachedDb && cachedClient) {
+async function connectToDatabase() {
+    if (cachedDb) {
         return cachedDb;
     }
-    
+
     try {
-        if (cachedClient) {
-            await cachedClient.close();
-        }
-        
         const client = new MongoClient(process.env.MONGODB_URI, {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
-            connectTimeoutMS: 10000,
         });
         
         await client.connect();
@@ -39,8 +34,6 @@ async function connectDB() {
         return cachedDb;
     } catch (e) {
         console.error('❌ Error conectando a MongoDB:', e.message);
-        cachedClient = null;
-        cachedDb = null;
         throw e;
     }
 }
@@ -64,6 +57,7 @@ app.post('/api/create-admin', async (req, res) => {
     try {
         const { email, password, nombre } = req.body;
         
+        const db = await connectToDatabase();
         const existing = await db.collection('users').findOne({ email });
         if (existing) return res.json({ success: false, error: 'Usuario ya existe' });
         
@@ -191,7 +185,7 @@ app.post('/api/notify-payment', async (req, res) => {
 
 app.get('/api/users', async (req, res) => {
     try {
-        const db = await connectDB();
+        const db = await connectToDatabase();
         const users = await db.collection('users').find({}).toArray();
         res.json(users.map(u => ({ ...u, id: u._id })));
     } catch (e) {
@@ -516,24 +510,12 @@ function formatUptime(seconds) {
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 FinanGest Server corriendo en puerto ${PORT}`);
-});
 
-// Auto-ping para mantener el servidor despierto (Render free tier)
-if (process.env.RENDER_EXTERNAL_URL) {
-    setInterval(() => {
-        const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-        const https = require('https');
-        const http = require('http');
-        const protocol = url.startsWith('https') ? https : http;
-        
-        protocol.get(url, (res) => {
-            console.log('✅ Keep-alive ping exitoso');
-        }).on('error', () => {
-            console.log('⚠️ Keep-alive ping falló');
-        });
-    }, 5 * 60 * 1000); // Cada 5 minutos
+// Solo para desarrollo local
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`🚀 FinanGest Server corriendo en puerto ${PORT}`);
+    });
 }
 
 module.exports = app;

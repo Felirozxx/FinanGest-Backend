@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: finangest-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node server-mongodb.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false

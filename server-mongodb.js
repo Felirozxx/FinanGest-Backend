@@ -502,17 +502,19 @@ app.listen(PORT, () => {
 });
 
 // Auto-ping para mantener el servidor despierto (Render free tier)
-setInterval(() => {
-    const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-    const https = require('https');
-    const http = require('http');
-    const protocol = url.startsWith('https') ? https : http;
-    
-    protocol.get(url, (res) => {
-        console.log('✅ Keep-alive ping exitoso');
-    }).on('error', () => {
-        console.log('⚠️ Keep-alive ping falló');
-    });
-}, 5 * 60 * 1000); // Cada 5 minutos
+if (process.env.RENDER_EXTERNAL_URL) {
+    setInterval(() => {
+        const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+        const https = require('https');
+        const http = require('http');
+        const protocol = url.startsWith('https') ? https : http;
+        
+        protocol.get(url, (res) => {
+            console.log('✅ Keep-alive ping exitoso');
+        }).on('error', () => {
+            console.log('⚠️ Keep-alive ping falló');
+        });
+    }, 5 * 60 * 1000); // Cada 5 minutos
+}
 
 module.exports = app;

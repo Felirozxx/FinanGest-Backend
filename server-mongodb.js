@@ -423,6 +423,54 @@ app.get('/', (req, res) => {
     res.redirect('/finangest.html');
 });
 
+// ============ ESTADÍSTICAS DEL SERVIDOR (ADMIN) ============
+app.get('/api/server-stats', async (req, res) => {
+    try {
+        const uptime = process.uptime();
+        const memoryUsage = process.memoryUsage();
+        
+        // Estadísticas de MongoDB
+        const users = await db.collection('users').countDocuments();
+        const clientes = await db.collection('clientes').countDocuments();
+        const gastos = await db.collection('gastos').countDocuments();
+        
+        // Calcular tamaño aproximado de la base de datos
+        const stats = await db.stats();
+        
+        res.json({
+            success: true,
+            server: {
+                uptime: Math.floor(uptime),
+                uptimeFormatted: formatUptime(uptime),
+                memoryUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+                memoryTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+                memoryLimit: 512, // Render free tier
+                platform: process.platform,
+                nodeVersion: process.version
+            },
+            mongodb: {
+                users,
+                clientes,
+                gastos,
+                totalDocuments: users + clientes + gastos,
+                dataSize: Math.round(stats.dataSize / 1024 / 1024), // MB
+                storageSize: Math.round(stats.storageSize / 1024 / 1024), // MB
+                storageLimit: 512, // MongoDB Atlas free tier
+                connected: true
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+function formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+}
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 FinanGest Server corriendo en puerto ${PORT}`);

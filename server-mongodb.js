@@ -58,11 +58,11 @@ app.post('/api/create-admin', async (req, res) => {
         const { email, password, nombre } = req.body;
         
         const db = await connectToDatabase();
-        const existing = await db.collection('users').findOne({ email });
+        const existing = await (await connectToDatabase()).collection('users').findOne({ email });
         if (existing) return res.json({ success: false, error: 'Usuario ya existe' });
         
         const hashedPassword = await bcrypt.hash(password, 10);
-        await db.collection('users').insertOne({
+        await (await connectToDatabase()).collection('users').insertOne({
             nombre: nombre || 'Administrador',
             email,
             password: hashedPassword,
@@ -113,11 +113,11 @@ app.post('/api/verify-code', async (req, res) => {
     }
     
     try {
-        const existing = await db.collection('users').findOne({ email });
+        const existing = await (await connectToDatabase()).collection('users').findOne({ email });
         if (existing) return res.json({ success: false, error: 'Email ya registrado' });
         
         const hashedPassword = await bcrypt.hash(password, 10);
-        const result = await db.collection('users').insertOne({
+        const result = await (await connectToDatabase()).collection('users').insertOne({
             nombre: stored.nombre,
             email,
             password: hashedPassword,
@@ -138,7 +138,7 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         const db = await connectToDatabase();
-        const user = await db.collection('users').findOne({ 
+        const user = await (await connectToDatabase()).collection('users').findOne({ 
             $or: [{ email }, { username: email }] 
         });
         
@@ -187,7 +187,7 @@ app.post('/api/notify-payment', async (req, res) => {
 app.get('/api/users', async (req, res) => {
     try {
         const db = await connectToDatabase();
-        const users = await db.collection('users').find({}).toArray();
+        const users = await (await connectToDatabase()).collection('users').find({}).toArray();
         res.json(users.map(u => ({ ...u, id: u._id })));
     } catch (e) {
         console.error('Error en /api/users:', e);
@@ -197,7 +197,7 @@ app.get('/api/users', async (req, res) => {
 
 app.put('/api/users/:id/activate', async (req, res) => {
     try {
-        await db.collection('users').updateOne(
+        await (await connectToDatabase()).collection('users').updateOne(
             { _id: new ObjectId(req.params.id) },
             { $set: { activo: true } }
         );
@@ -209,8 +209,8 @@ app.put('/api/users/:id/activate', async (req, res) => {
 
 app.put('/api/users/:id/block', async (req, res) => {
     try {
-        const user = await db.collection('users').findOne({ _id: new ObjectId(req.params.id) });
-        await db.collection('users').updateOne(
+        const user = await (await connectToDatabase()).collection('users').findOne({ _id: new ObjectId(req.params.id) });
+        await (await connectToDatabase()).collection('users').updateOne(
             { _id: new ObjectId(req.params.id) },
             { $set: { bloqueado: !user.bloqueado } }
         );
@@ -222,7 +222,7 @@ app.put('/api/users/:id/block', async (req, res) => {
 
 app.delete('/api/users/:id', async (req, res) => {
     try {
-        await db.collection('users').deleteOne({ _id: new ObjectId(req.params.id) });
+        await (await connectToDatabase()).collection('users').deleteOne({ _id: new ObjectId(req.params.id) });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Error eliminando usuario' });
@@ -235,7 +235,7 @@ app.get('/api/clientes', async (req, res) => {
     const { userId } = req.query;
     try {
         const query = userId ? { creadoPor: userId } : {};
-        const clientes = await db.collection('clientes').find(query).toArray();
+        const clientes = await (await connectToDatabase()).collection('clientes').find(query).toArray();
         res.json(clientes.map(c => ({ ...c, id: c._id })));
     } catch (e) {
         res.status(500).json({ error: 'Error obteniendo clientes' });
@@ -245,7 +245,7 @@ app.get('/api/clientes', async (req, res) => {
 app.post('/api/clientes', async (req, res) => {
     try {
         const cliente = { ...req.body, fechaCreacion: new Date() };
-        const result = await db.collection('clientes').insertOne(cliente);
+        const result = await (await connectToDatabase()).collection('clientes').insertOne(cliente);
         res.json({ success: true, id: result.insertedId, cliente: { ...cliente, id: result.insertedId } });
     } catch (e) {
         res.status(500).json({ error: 'Error creando cliente' });
@@ -259,7 +259,7 @@ app.put('/api/clientes/:id', async (req, res) => {
         delete updateData._id;
         delete updateData.id;
         
-        await db.collection('clientes').updateOne(
+        await (await connectToDatabase()).collection('clientes').updateOne(
             { _id: new ObjectId(id) },
             { $set: updateData }
         );
@@ -271,7 +271,7 @@ app.put('/api/clientes/:id', async (req, res) => {
 
 app.delete('/api/clientes/:id', async (req, res) => {
     try {
-        await db.collection('clientes').deleteOne({ _id: new ObjectId(req.params.id) });
+        await (await connectToDatabase()).collection('clientes').deleteOne({ _id: new ObjectId(req.params.id) });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Error eliminando cliente' });
@@ -288,9 +288,9 @@ app.put('/api/admin/cliente/:id', async (req, res) => {
         delete updateData.id;
         
         // Crear backup antes de editar
-        const cliente = await db.collection('clientes').findOne({ _id: new ObjectId(id) });
+        const cliente = await (await connectToDatabase()).collection('clientes').findOne({ _id: new ObjectId(id) });
         if (cliente) {
-            await db.collection('backups').insertOne({
+            await (await connectToDatabase()).collection('backups').insertOne({
                 tipo: 'edit_cliente',
                 clienteId: id,
                 datosAnteriores: cliente,
@@ -298,7 +298,7 @@ app.put('/api/admin/cliente/:id', async (req, res) => {
             });
         }
         
-        await db.collection('clientes').updateOne(
+        await (await connectToDatabase()).collection('clientes').updateOne(
             { _id: new ObjectId(id) },
             { $set: updateData }
         );
@@ -310,9 +310,9 @@ app.put('/api/admin/cliente/:id', async (req, res) => {
 
 app.delete('/api/admin/cliente/:id', async (req, res) => {
     try {
-        const cliente = await db.collection('clientes').findOne({ _id: new ObjectId(req.params.id) });
+        const cliente = await (await connectToDatabase()).collection('clientes').findOne({ _id: new ObjectId(req.params.id) });
         if (cliente) {
-            await db.collection('backups').insertOne({
+            await (await connectToDatabase()).collection('backups').insertOne({
                 tipo: 'delete_cliente',
                 clienteId: req.params.id,
                 datosEliminados: cliente,
@@ -320,7 +320,7 @@ app.delete('/api/admin/cliente/:id', async (req, res) => {
             });
         }
         
-        await db.collection('clientes').deleteOne({ _id: new ObjectId(req.params.id) });
+        await (await connectToDatabase()).collection('clientes').deleteOne({ _id: new ObjectId(req.params.id) });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Error eliminando cliente' });
@@ -333,7 +333,7 @@ app.get('/api/gastos', async (req, res) => {
     const { userId } = req.query;
     try {
         const query = userId ? { creadoPor: userId } : {};
-        const gastos = await db.collection('gastos').find(query).toArray();
+        const gastos = await (await connectToDatabase()).collection('gastos').find(query).toArray();
         res.json(gastos.map(g => ({ ...g, id: g._id })));
     } catch (e) {
         res.status(500).json({ error: 'Error obteniendo gastos' });
@@ -343,7 +343,7 @@ app.get('/api/gastos', async (req, res) => {
 app.post('/api/gastos', async (req, res) => {
     try {
         const gasto = { ...req.body, fechaCreacion: new Date() };
-        const result = await db.collection('gastos').insertOne(gasto);
+        const result = await (await connectToDatabase()).collection('gastos').insertOne(gasto);
         res.json({ success: true, id: result.insertedId });
     } catch (e) {
         res.status(500).json({ error: 'Error creando gasto' });
@@ -352,7 +352,7 @@ app.post('/api/gastos', async (req, res) => {
 
 app.delete('/api/gastos/:id', async (req, res) => {
     try {
-        await db.collection('gastos').deleteOne({ _id: new ObjectId(req.params.id) });
+        await (await connectToDatabase()).collection('gastos').deleteOne({ _id: new ObjectId(req.params.id) });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Error eliminando gasto' });
@@ -366,7 +366,7 @@ app.put('/api/admin/gasto/:id', async (req, res) => {
         delete updateData._id;
         delete updateData.id;
         
-        await db.collection('gastos').updateOne(
+        await (await connectToDatabase()).collection('gastos').updateOne(
             { _id: new ObjectId(id) },
             { $set: updateData }
         );
@@ -378,7 +378,7 @@ app.put('/api/admin/gasto/:id', async (req, res) => {
 
 app.delete('/api/admin/gasto/:id', async (req, res) => {
     try {
-        await db.collection('gastos').deleteOne({ _id: new ObjectId(req.params.id) });
+        await (await connectToDatabase()).collection('gastos').deleteOne({ _id: new ObjectId(req.params.id) });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Error eliminando gasto' });
@@ -389,9 +389,9 @@ app.delete('/api/admin/gasto/:id', async (req, res) => {
 
 app.get('/api/backups', async (req, res) => {
     try {
-        const users = await db.collection('users').find({}).toArray();
-        const clientes = await db.collection('clientes').find({}).toArray();
-        const gastos = await db.collection('gastos').find({}).toArray();
+        const users = await (await connectToDatabase()).collection('users').find({}).toArray();
+        const clientes = await (await connectToDatabase()).collection('clientes').find({}).toArray();
+        const gastos = await (await connectToDatabase()).collection('gastos').find({}).toArray();
         
         const backups = [{
             id: 'current',
@@ -410,9 +410,9 @@ app.get('/api/backups', async (req, res) => {
 
 app.get('/api/backup/download', async (req, res) => {
     try {
-        const users = await db.collection('users').find({}).toArray();
-        const clientes = await db.collection('clientes').find({}).toArray();
-        const gastos = await db.collection('gastos').find({}).toArray();
+        const users = await (await connectToDatabase()).collection('users').find({}).toArray();
+        const clientes = await (await connectToDatabase()).collection('clientes').find({}).toArray();
+        const gastos = await (await connectToDatabase()).collection('gastos').find({}).toArray();
         
         const backup = {
             fecha: new Date().toISOString(),
@@ -434,21 +434,21 @@ app.post('/api/backup/restore', async (req, res) => {
         const { users, clientes, gastos } = req.body;
         
         if (clientes && clientes.length > 0) {
-            await db.collection('clientes').deleteMany({});
+            await (await connectToDatabase()).collection('clientes').deleteMany({});
             const clientesLimpios = clientes.map(c => {
                 const { _id, id, ...resto } = c;
                 return resto;
             });
-            await db.collection('clientes').insertMany(clientesLimpios);
+            await (await connectToDatabase()).collection('clientes').insertMany(clientesLimpios);
         }
         
         if (gastos && gastos.length > 0) {
-            await db.collection('gastos').deleteMany({});
+            await (await connectToDatabase()).collection('gastos').deleteMany({});
             const gastosLimpios = gastos.map(g => {
                 const { _id, id, ...resto } = g;
                 return resto;
             });
-            await db.collection('gastos').insertMany(gastosLimpios);
+            await (await connectToDatabase()).collection('gastos').insertMany(gastosLimpios);
         }
         
         res.json({ success: true });
@@ -469,9 +469,9 @@ app.get('/api/server-stats', async (req, res) => {
         const memoryUsage = process.memoryUsage();
         
         // Estadísticas de MongoDB
-        const users = await db.collection('users').countDocuments();
-        const clientes = await db.collection('clientes').countDocuments();
-        const gastos = await db.collection('gastos').countDocuments();
+        const users = await (await connectToDatabase()).collection('users').countDocuments();
+        const clientes = await (await connectToDatabase()).collection('clientes').countDocuments();
+        const gastos = await (await connectToDatabase()).collection('gastos').countDocuments();
         
         // Calcular tamaño aproximado de la base de datos
         const stats = await db.stats();

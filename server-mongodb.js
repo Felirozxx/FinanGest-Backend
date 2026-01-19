@@ -12,21 +12,38 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// MongoDB Connection
-let db;
-const mongoUri = process.env.MONGODB_URI;
+// MongoDB Connection - Optimizado para Railway
+let cachedClient = null;
+let cachedDb = null;
 
 async function connectDB() {
+    if (cachedDb && cachedClient) {
+        return cachedDb;
+    }
+    
     try {
-        const client = new MongoClient(mongoUri);
+        if (cachedClient) {
+            await cachedClient.close();
+        }
+        
+        const client = new MongoClient(process.env.MONGODB_URI, {
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 10000,
+        });
+        
         await client.connect();
-        db = client.db('finangest');
+        cachedClient = client;
+        cachedDb = client.db('finangest');
         console.log('✅ Conectado a MongoDB Atlas');
+        return cachedDb;
     } catch (e) {
         console.error('❌ Error conectando a MongoDB:', e.message);
+        cachedClient = null;
+        cachedDb = null;
+        throw e;
     }
 }
-connectDB();
 
 // Email transporter
 const transporter = nodemailer.createTransport({
@@ -174,9 +191,11 @@ app.post('/api/notify-payment', async (req, res) => {
 
 app.get('/api/users', async (req, res) => {
     try {
+        const db = await connectDB();
         const users = await db.collection('users').find({}).toArray();
         res.json(users.map(u => ({ ...u, id: u._id })));
     } catch (e) {
+        console.error('Error en /api/users:', e);
         res.status(500).json({ error: 'Error obteniendo usuarios' });
     }
 });

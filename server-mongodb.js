@@ -22,7 +22,12 @@ async function connectToDatabase() {
     }
 
     try {
-        const client = new MongoClient(process.env.MONGODB_URI, {
+        const mongoUri = process.env.MONGODB_URI;
+        if (!mongoUri) {
+            throw new Error('MONGODB_URI no está definida');
+        }
+        
+        const client = new MongoClient(mongoUri, {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
         });

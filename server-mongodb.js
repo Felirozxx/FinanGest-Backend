@@ -42,6 +42,31 @@ const verificationCodes = {};
 
 // ============ AUTH ROUTES ============
 
+// Crear admin (solo para setup inicial - ELIMINAR DESPUÉS)
+app.post('/api/create-admin', async (req, res) => {
+    try {
+        const { email, password, nombre } = req.body;
+        
+        const existing = await db.collection('users').findOne({ email });
+        if (existing) return res.json({ success: false, error: 'Usuario ya existe' });
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await db.collection('users').insertOne({
+            nombre: nombre || 'Administrador',
+            email,
+            password: hashedPassword,
+            role: 'admin',
+            isAdmin: true,
+            activo: true,
+            fechaRegistro: new Date()
+        });
+        
+        res.json({ success: true, message: 'Admin creado exitosamente' });
+    } catch (e) {
+        res.json({ success: false, error: 'Error creando admin' });
+    }
+});
+
 // Enviar código de verificación
 app.post('/api/send-code', async (req, res) => {
     const { email, nombre } = req.body;

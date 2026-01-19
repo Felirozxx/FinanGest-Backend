@@ -137,6 +137,7 @@ app.post('/api/verify-code', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
+        const db = await connectToDatabase();
         const user = await db.collection('users').findOne({ 
             $or: [{ email }, { username: email }] 
         });

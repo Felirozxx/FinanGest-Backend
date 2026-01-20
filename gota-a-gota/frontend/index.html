@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gota a Gota - Sistema de Microcréditos</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <i class="fas fa-coins"></i>
+                    <h1>Gota a Gota</h1>
+                    <p>Sistema de Microcréditos</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Usuario o Email</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </button>
+                </form>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appScreen" class="screen">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-coins"></i>
+                <span>Gota a Gota</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#" data-section="dashboard" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#" data-section="clients" class="nav-link">
+                    <i class="fas fa-users"></i> Clientes
+                </a>
+                <a href="#" data-section="loans" class="nav-link">
+                    <i class="fas fa-hand-holding-usd"></i> Préstamos
+                </a>
+                <a href="#" data-section="payments" class="nav-link">
+                    <i class="fas fa-money-bill-wave"></i> Pagos
+                </a>
+                <a href="#" data-section="reports" class="nav-link">
+                    <i class="fas fa-chart-bar"></i> Reportes
+                </a>
+            </div>
+            <div class="nav-user">
+                <span id="userInfo"></span>
+                <button id="logoutBtn" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalClients">0</h3>
+                            <p>Clientes Activos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="activeLoans">0</h3>
+                            <p>Préstamos Activos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="overdueLoans">0</h3>
+                            <p>Préstamos Vencidos</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="todayCollection">$0</h3>
+                            <p>Cobrado Hoy</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Resumen Financiero</h3>
+                        <div class="financial-summary">
+                            <div class="summary-item">
+                                <span>Total Prestado:</span>
+                                <span id="totalLent" class="amount">$0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Cobrado:</span>
+                                <span id="totalCollected" class="amount success">$0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Pendiente:</span>
+                                <span id="pendingAmount" class="amount warning">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Cobranzas</h3>
+                        <div class="collection-summary">
+                            <div class="collection-item">
+                                <span>Hoy:</span>
+                                <span id="todayCollectionDetail" class="amount">$0</span>
+                            </div>
+                            <div class="collection-item">
+                                <span>Esta Semana:</span>
+                                <span id="weekCollection" class="amount">$0</span>
+                            </div>
+                            <div class="collection-item">
+                                <span>Este Mes:</span>
+                                <span id="monthCollection" class="amount">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clients Section -->
+            <section id="clients" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Clientes</h2>
+                    <button id="addClientBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Cliente
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="clientsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Cédula</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Loans Section -->
+            <section id="loans" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-hand-holding-usd"></i> Préstamos</h2>
+                    <button id="addLoanBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nuevo Préstamo
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="loansTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Total</th>
+                                <th>Pagado</th>
+                                <th>Pendiente</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Payments Section -->
+            <section id="payments" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-money-bill-wave"></i> Pagos</h2>
+                    <button id="addPaymentBtn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Registrar Pago
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="paymentsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Método</th>
+                                <th>Cobrador</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-bar"></i> Reportes</h2>
+                </div>
+                
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>Préstamos Vencidos</h3>
+                        <div id="overdueList" class="report-content">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-content">
+            <!-- Modal content will be inserted here -->
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

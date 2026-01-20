@@ -1,22 +1,66 @@
 {
-  "name": "FinanGest - Gestão Financeira Profissional",
+  "name": "FinanGest - Sistema de Gestión Financiera",
   "short_name": "FinanGest",
-  "description": "Sistema profissional de gestão financeira",
-  "start_url": "/finangest.html",
+  "description": "Aplicación para gestión financiera, control de préstamos, pagos y gastos",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#00d4ff",
   "orientation": "portrait-primary",
-  "icons": [
+  "background_color": "#0a1628",
+  "theme_color": "#00d4ff",
+  "categories": ["finance", "business", "productivity"],
+  "screenshots": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMxYTFhMmUiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjMDBkNGZmIj4KPHA+PHBhdGggZD0iTTMgM3YxOGgxOFYzSDN6bTggMTZINXYtNmg2djZ6bTgtOGgtNlY1aDZ2NnoiLz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "src": "icons/Icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9IiMxYTFhMmUiLz4KPHN2ZyB4PSIxMjgiIHk9IjEyOCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzAwZDRmZiI+CjxwYXRoIGQ9Ik0zIDN2MThIMjFWM0gzem04IDE2SDV2LTZoNnY2em04LThoLTZWNWg2djZ6Ii8+Cjwvc3ZnPgo=",
+      "src": "icons/Icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
+    }
+  ],
+  "icons": [
+    {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Crear Cartera",
+      "short_name": "Nueva Cartera",
+      "description": "Crear una nueva cartera de gestión",
+      "url": "/?action=new-wallet",
+      "icons": [
+        {
+          "src": "icons/Icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Ver Clientes",
+      "short_name": "Clientes",
+      "description": "Ver lista de clientes registrados",
+      "url": "/?action=clients",
+      "icons": [
+        {
+          "src": "icons/Icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

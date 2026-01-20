@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "196334607456",
+    "project_id": "finangest-2",
+    "storage_bucket": "finangest-2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:196334607456:android:90cd9c734a776e51abb705",
+        "android_client_info": {
+          "package_name": "com.finangest.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "196334607456-3lebf9uhanhhabdeg5vs2fp6pnc15n2b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgOiHarML_2ylQGg_WLFeN_8VjLIxc0zQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "196334607456-3lebf9uhanhhabdeg5vs2fp6pnc15n2b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "196334607456-um9c0dneed6toelkbu2shbv8lb5jr4sf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.finangest.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

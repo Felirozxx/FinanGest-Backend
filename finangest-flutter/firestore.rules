@@ -1,0 +1,270 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // FUNCIONES AUXILIARES
+    // ============================================
+    
+    // Verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Obtener datos del usuario actual
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Verificar si es admin
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == 'admin';
+    }
+    
+    // Verificar si tiene acceso a una cartera
+    function hasWalletAccess(walletId) {
+      return isAdmin() || walletId in getUserData().availableWallets;
+    }
+    
+    // Verificar si el usuario está activo
+    function isActiveUser() {
+      return getUserData().isActive == true;
+    }
+    
+    // ============================================
+    // USUARIOS
+    // ============================================
+    
+    match /users/{userId} {
+      // Leer: solo el propio usuario o admin
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId || isAdmin()
+      );
+      
+      // Crear: solo durante el registro (manejado por Cloud Function)
+      allow create: if false;
+      
+      // Actualizar: solo campos permitidos
+      allow update: if isAuthenticated() && request.auth.uid == userId && (
+        // Solo puede actualizar displayName y lastLogin
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['displayName', 'lastLogin'])
+      );
+      
+      // NO se puede cambiar role, availableWallets, isActive desde la app
+      // Eso solo lo hace Cloud Functions o admin desde consola
+      
+      // Eliminar: nunca (soft delete)
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // CARTERAS (WALLETS)
+    // ============================================
+    
+    match /wallets/{walletId} {
+      // Leer: solo si tiene acceso
+      allow read: if isAuthenticated() && isActiveUser() && hasWalletAccess(walletId);
+      
+      // Crear: solo admin (pero mejor usar Cloud Function)
+      allow create: if isAdmin();
+      
+      // Actualizar: solo admin y solo campos permitidos
+      allow update: if isAdmin() && (
+        // NO se puede cambiar passwordHash desde la app
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['passwordHash'])
+      );
+      
+      // Eliminar: nunca (soft delete)
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // CLIENTES
+    // ============================================
+    
+    match /clients/{clientId} {
+      // Leer: si tiene acceso a la cartera del cliente
+      allow read: if isAuthenticated() && isActiveUser() && 
+        hasWalletAccess(resource.data.walletId);
+      
+      // Crear: si tiene acceso a la cartera
+      allow create: if isAuthenticated() && isActiveUser() && 
+        hasWalletAccess(request.resource.data.walletId) &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      // Actualizar: si tiene acceso a la cartera
+      allow update: if isAuthenticated() && isActiveUser() && 
+        hasWalletAccess(resource.data.walletId) &&
+        // NO se puede cambiar walletId ni createdBy
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['walletId', 'createdBy']);
+      
+      // Eliminar: solo soft delete (cambiar isActive)
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // PRÉSTAMOS
+    // ============================================
+    
+    match /loans/{loanId} {
+      // Leer: si tiene acceso a la cartera
+      allow read: if isAuthenticated() && isActiveUser() && 
+        hasWalletAccess(resource.data.walletId);
+      
+      // Crear: SOLO por Cloud Function
+      allow create: if false;
+      
+      // Actualizar: SOLO por Cloud Function
+      allow update: if false;
+      
+      // Eliminar: nunca
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // CUOTAS (INSTALLMENTS)
+    // ============================================
+    
+    match /installments/{installmentId} {
+      // Leer: si tiene acceso a la cartera
+      allow read: if isAuthenticated() && isActiveUser() && 
+        hasWalletAccess(resource.data.walletId);
+      
+      // Crear: SOLO por Cloud Function (al crear préstamo)
+      allow create: if false;
+      
+      // Actualizar: SOLO por Cloud Function (pagar, renovar)
+      allow update: if false;
+      
+      // Eliminar: nunca
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // EVENTOS (TIMELINE)
+    // ============================================
+    
+    match /events/{eventId} {
+      // Leer: si tiene acceso al cliente
+      allow read: if isAuthenticated() && isActiveUser();
+      
+      // Crear: SOLO por Cloud Function
+      allow create: if false;
+      
+      // Actualizar/Eliminar: nunca
+      allow update, delete: if false;
+    }
+    
+    // ============================================
+    // GASTOS (EXPENSES)
+    // ============================================
+    
+    match /expenses/{expenseId} {
+      // Leer: si tiene acceso a la cartera o es gasto general
+      allow read: if isAuthenticated() && isActiveUser() && (
+        resource.data.walletId == null || 
+        hasWalletAccess(resource.data.walletId)
+      );
+      
+      // Crear: si tiene acceso a la cartera
+      allow create: if isAuthenticated() && isActiveUser() && (
+        request.resource.data.walletId == null || 
+        hasWalletAccess(request.resource.data.walletId)
+      ) && request.resource.data.createdBy == request.auth.uid;
+      
+      // Actualizar: solo el creador o admin
+      allow update: if isAuthenticated() && isActiveUser() && (
+        resource.data.createdBy == request.auth.uid || isAdmin()
+      );
+      
+      // Eliminar: solo admin
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // ESTADÍSTICAS DIARIAS
+    // ============================================
+    
+    match /daily_stats/{statId} {
+      // Leer: si tiene acceso a la cartera
+      allow read: if isAuthenticated() && isActiveUser() && 
+        hasWalletAccess(resource.data.walletId);
+      
+      // Crear/Actualizar: SOLO por Cloud Function
+      allow create, update: if false;
+      
+      // Eliminar: nunca
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // AUDITORÍA
+    // ============================================
+    
+    match /audit_logs/{logId} {
+      // Leer: solo admin
+      allow read: if isAdmin();
+      
+      // Crear: SOLO por Cloud Function
+      allow create: if false;
+      
+      // Actualizar/Eliminar: nunca
+      allow update, delete: if false;
+    }
+    
+    // ============================================
+    // OPERACIONES (IDEMPOTENCIA)
+    // ============================================
+    
+    match /operations/{operationId} {
+      // Leer: el que la creó
+      allow read: if isAuthenticated();
+      
+      // Crear: SOLO por Cloud Function
+      allow create: if false;
+      
+      // Actualizar/Eliminar: nunca
+      allow update, delete: if false;
+    }
+    
+    // ============================================
+    // ESTADO DEL SISTEMA
+    // ============================================
+    
+    match /system_status/{statusId} {
+      // Leer: todos los autenticados
+      allow read: if isAuthenticated();
+      
+      // Crear/Actualizar: SOLO por Cloud Function
+      allow create, update: if false;
+      
+      // Eliminar: nunca
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // BACKUPS
+    // ============================================
+    
+    match /backups/{backupId} {
+      // Leer: solo admin
+      allow read: if isAdmin();
+      
+      // Crear: solo admin
+      allow create: if isAdmin();
+      
+      // Actualizar/Eliminar: solo admin
+      allow update, delete: if isAdmin();
+    }
+    
+    // ============================================
+    // REGLA POR DEFECTO: DENEGAR TODO
+    // ============================================
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

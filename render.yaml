@@ -1,15 +1,10 @@
 services:
   - type: web
-    name: finangest-backend
-    env: node
-    buildCommand: npm install
-    startCommand: node server-mongodb.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGODB_URI
-        sync: false
-      - key: EMAIL_USER
-        sync: false
-      - key: EMAIL_PASS
-        sync: false
+    name: finangest
+    env: static
+    buildCommand: echo "No build needed"
+    staticPublishPath: ./public
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
